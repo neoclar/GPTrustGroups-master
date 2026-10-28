@@ -263,6 +263,13 @@ public class GroupManager {
         path.add(group.getId());
         boolean hasAllowed = false, hasDenied = false;
         try {
+            // Участники исключённой группы не получают доступ, если не добавлены сюда напрямую.
+            // path общий с вложенностью — взаимно исключённые группы не зациклятся.
+            for (String excludedName : group.getExcludedGroups()) {
+                Group excluded = resolveNested(group, excludedName);
+                if (excluded == null) continue;
+                if (checkAccess(excluded, player, path) == AccessResult.ALLOWED) return AccessResult.DENIED;
+            }
             for (String nestedName : group.getNestedGroups()) {
                 Group nested = resolveNested(group, nestedName);
                 if (nested == null) continue;
