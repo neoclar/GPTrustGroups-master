@@ -18,7 +18,7 @@ import java.util.UUID;
 
 public class ClaimPermissionListener implements Listener {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private final GPTrustGroups plugin;
     private final GroupManager groupManager;

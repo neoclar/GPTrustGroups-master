@@ -97,7 +97,7 @@ public class TrustCommandInterceptor implements Listener {
                 GriefPrevention.instance.dataStore.saveClaim(claim);
                 send(player, TextMode.Success, messages.format("Trust.GroupRevoked", groupName));
             } else {
-                send(player, TextMode.Warn, messages.format("Trust.GroupNotHad", groupName));
+                send(player, TextMode.Warn, messages.format("Trust.NotHad", groupName));
             }
             return;
         }
