@@ -69,6 +69,8 @@ public class TrustCommandInterceptor implements Listener {
         boolean isUntrust = cmd.equals("untrust");
         if (!isUntrust && COMMANDS.stream().noneMatch(c -> c.name().equals(cmd))) return;
         if (!arg.startsWith("#")) return;
+        // Без права GP на приваты — пусть GP сам ответит отказом
+        if (!event.getPlayer().hasPermission("griefprevention.claims")) return;
 
         event.setCancelled(true);
         Player player = event.getPlayer();
@@ -86,9 +88,20 @@ public class TrustCommandInterceptor implements Listener {
             return;
         }
 
+        // Менять доверие может только владелец или менеджер привата — та же проверка, что в /trust и /untrust GP
+        if (claim.checkPermission(player, ClaimPermission.Manage, null) != null) {
+            send(player, TextMode.Err, messages.format("Trust.NoPermission", claim.getOwnerName()));
+            return;
+        }
+
         String groupId = group.getId().toString();
 
         if (isUntrust) {
+            // Снять группу-менеджера может только владелец (как ManagersDontUntrustManagers в GP)
+            if (getList(claim, 3).contains(groupId) && claim.checkPermission(player, ClaimPermission.Edit, null) != null) {
+                send(player, TextMode.Err, messages.get("Trust.ManagersOwnerOnly"));
+                return;
+            }
             boolean removed = false;
             for (TrustCommand tc : COMMANDS) {
                 if (removePermission(claim, groupId, tc.permission())) removed = true;
