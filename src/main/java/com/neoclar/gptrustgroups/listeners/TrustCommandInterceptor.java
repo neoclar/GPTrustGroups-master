@@ -3,6 +3,7 @@ package com.neoclar.gptrustgroups.listeners;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -40,6 +41,22 @@ public class TrustCommandInterceptor implements Listener {
             new TrustCommand("accesstrust", ClaimPermission.Access, "Access"),
             new TrustCommand("permissiontrust", ClaimPermission.Manage, "Manage")
     );
+    // Алиасы из plugin.yml GriefPrevention
+    private static final Map<String, String> ALIASES = Map.of(
+            "tr", "trust",
+            "ct", "containertrust",
+            "at", "accesstrust",
+            "pt", "permissiontrust",
+            "managetrust", "permissiontrust",
+            "ut", "untrust"
+    );
+
+    /** "/GriefPrevention:ct" → "containertrust" */
+    private static String normalizeCommand(String raw) {
+        String cmd = raw.toLowerCase();
+        if (cmd.startsWith("griefprevention:")) cmd = cmd.substring("griefprevention:".length());
+        return ALIASES.getOrDefault(cmd, cmd);
+    }
 
     public TrustCommandInterceptor(GPTrustGroups plugin) {
         this.plugin = plugin;
@@ -55,7 +72,7 @@ public class TrustCommandInterceptor implements Listener {
         String[] parts = message.substring(1).split("\\s+", 3);
         if (parts.length < 1) return;
 
-        String cmd = parts[0].toLowerCase();
+        String cmd = normalizeCommand(parts[0]);
 
         if (cmd.equals("trustlist") || cmd.equals("trustlistall")) {
             event.setCancelled(true);
@@ -214,7 +231,7 @@ public void onTabComplete(TabCompleteEvent event) {
 
     String withoutSlash = buffer.substring(1);
     String[] parts = withoutSlash.split("\\s+", 2);
-    String cmd = parts[0].toLowerCase();
+    String cmd = normalizeCommand(parts[0]);
 
     boolean isTrustCmd = cmd.equals("trust") || cmd.equals("containertrust")
             || cmd.equals("accesstrust") || cmd.equals("permissiontrust")
