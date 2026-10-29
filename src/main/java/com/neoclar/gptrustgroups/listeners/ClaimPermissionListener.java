@@ -6,6 +6,7 @@ import com.neoclar.gptrustgroups.util.GroupIdMapper;
 import com.neoclar.gptrustgroups.storage.GroupManager;
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.ClaimPermission;
+import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.ryanhamshire.GriefPrevention.events.ClaimPermissionCheckEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -39,11 +40,19 @@ public class ClaimPermissionListener implements Listener {
         ClaimPermission required = event.getRequiredPermission();
         if (required == null) return;
 
+        // GP запрещает строить в PvP-бою даже доверенным — не перебиваем этот запрет
+        if (required == ClaimPermission.Build
+                && GriefPrevention.instance.dataStore.getPlayerData(player.getUniqueId()).inPvpCombat()) return;
+
         ArrayList<String> builders = new ArrayList<>();
         ArrayList<String> containers = new ArrayList<>();
         ArrayList<String> accessors = new ArrayList<>();
         ArrayList<String> managers = new ArrayList<>();
-        claim.getPermissions(builders, containers, accessors, managers);
+        // Сабклейм наследует доверие родителя, если не включено ограничение — как в GP.
+        // GP проверяет родителя без события, поэтому группы родителя собираем сами.
+        for (Claim c = claim; c != null; c = c.getSubclaimRestrictions() ? null : c.parent) {
+            c.getPermissions(builders, containers, accessors, managers);
+        }
 
         if (DEBUG) {
             plugin.getLogger().info("[DEBUG] player=" + player.getName()
