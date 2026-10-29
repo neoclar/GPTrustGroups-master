@@ -4,6 +4,7 @@ import com.neoclar.gptrustgroups.GPTrustGroups;
 import com.neoclar.gptrustgroups.storage.Group;
 import com.neoclar.gptrustgroups.storage.GroupManager;
 import com.neoclar.gptrustgroups.storage.Messages;
+import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.ryanhamshire.GriefPrevention.TextMode;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -314,11 +315,10 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     private void send(Player player, ChatColor color, String message) { player.sendMessage(color + message); }
 
     private UUID resolvePlayer(String name) {
-        Player online = Bukkit.getPlayerExact(name);
-        if (online != null) return online.getUniqueId();
-        @SuppressWarnings("deprecation")
-		OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
-        return offline.hasPlayedBefore() ? offline.getUniqueId() : null;
+        // Кэш ников GP (сначала онлайн-игроки). Bukkit.getOfflinePlayer(name) для незнакомого ника
+        // блокирует основной поток запросом к Mojang
+        OfflinePlayer p = GriefPrevention.instance.resolvePlayerByName(name);
+        return p != null ? p.getUniqueId() : null;
     }
 
     private String displayName(UUID uuid) {
