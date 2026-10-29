@@ -74,6 +74,11 @@ public class GroupManager {
                 if (gs == null) continue;
 
                 UUID id = parseUuid(gs.getString("id"));
+                if (PUBLIC_NAME.equalsIgnoreCase(name) && !PUBLIC_OWNER.equals(owner)) {
+                    // Иначе такая группа получила бы PUBLIC_ID и подменила системную #public
+                    plugin.getLogger().warning("Group 'public' of " + ownerKey + " uses a reserved name — skipping.");
+                    continue;
+                }
                 if (PUBLIC_NAME.equalsIgnoreCase(name)) {
                     if (!PUBLIC_ID.equals(id)) { id = PUBLIC_ID; needsSave = true; }
                 } else if (id == null) {
