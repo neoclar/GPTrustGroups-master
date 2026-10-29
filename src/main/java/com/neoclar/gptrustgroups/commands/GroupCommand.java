@@ -4,6 +4,7 @@ import com.neoclar.gptrustgroups.GPTrustGroups;
 import com.neoclar.gptrustgroups.storage.Group;
 import com.neoclar.gptrustgroups.storage.GroupManager;
 import com.neoclar.gptrustgroups.storage.Messages;
+import com.neoclar.gptrustgroups.util.ClaimTrustCleaner;
 import me.ryanhamshire.GriefPrevention.TextMode;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -73,6 +74,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
         if (g.isPublic()) { send(player, TextMode.Err, messages.get("Delete.PublicForbidden")); return; }
         manager.delete(player.getUniqueId(), g.getName());
         send(player, TextMode.Success, messages.format("Delete.Success", g.getName()));
+        // Иначе UUID удалённой группы так и останется в доверии приватов
+        int cleaned = ClaimTrustCleaner.dropEverywhere(g.getId().toString());
+        if (cleaned > 0) send(player, TextMode.Info, messages.format("Delete.ClaimsCleaned", cleaned));
     }
 
     private void cmdAdd(Player player, String[] args) {

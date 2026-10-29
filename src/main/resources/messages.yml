@@ -15,6 +15,7 @@ Create.ReservedName: "That name is reserved."
 Delete.Usage: "Usage: /trustgroups delete <name>"
 Delete.Success: "Group #{0} deleted."
 Delete.PublicForbidden: "The system group #public cannot be deleted."
+Delete.ClaimsCleaned: "Its trust was removed from {0} claim(s)."
 
 # ===== /trustgroups add =====
 Add.Usage: "Usage: /trustgroups add <name> <player|#group>"
