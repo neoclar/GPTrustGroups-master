@@ -61,6 +61,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
 
     private void cmdCreate(Player player, String[] args) {
         if (args.length < 2) { send(player, TextMode.Err, messages.get("Create.Usage")); return; }
+        String name = args[1].toLowerCase();
+        if (GroupManager.RESERVED_NAMES.contains(name)) { send(player, TextMode.Err, messages.get("Create.ReservedName")); return; }
+        if (manager.get(player.getUniqueId(), name) != null) { send(player, TextMode.Err, messages.format("Create.NameTaken", name)); return; }
         Group g = manager.create(args[1], player.getUniqueId());
         if (g == null) { send(player, TextMode.Err, messages.get("Create.InvalidName")); return; }
         send(player, TextMode.Success, messages.format("Create.Success", g.getName()));
@@ -157,6 +160,8 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             if (exclude) {
                 if (child.equalsIgnoreCase(g.getName())) {
                     send(player, TextMode.Err, messages.get("Exclude.Group.SameGroup"));
+                } else if (manager.get(player.getUniqueId(), child) == null) {
+                    send(player, TextMode.Err, messages.format("Exclude.Group.NotExists", child));
                 } else if (manager.excludeGroup(g, child)) {
                     send(player, TextMode.Success, messages.format("Exclude.Group.Success", child, g.getName()));
                 } else {
