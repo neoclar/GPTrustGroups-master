@@ -55,21 +55,9 @@ public class ClaimPermissionListener implements Listener {
                     + " | managers=" + managers);
         }
 
-        List<List<String>> listsToCheck = new ArrayList<>();
-        switch (required) {
-            case Access -> {
-                listsToCheck.add(accessors);
-                listsToCheck.add(containers);
-                listsToCheck.add(builders);
-            }
-            case Inventory -> {
-                listsToCheck.add(containers);
-                listsToCheck.add(builders);
-            }
-            case Build -> listsToCheck.add(builders);
-            case Manage -> listsToCheck.add(managers);
-            default -> { return; }
-        }
+        // Проверяем все записи привата, а даёт ли запись нужный уровень — решает сам GP (см. grantsRequired).
+        // Свой switch по ClaimPermission ломается: в новых GP Inventory переименован в Container.
+        List<List<String>> listsToCheck = List.of(builders, containers, accessors, managers);
 
 
 boolean anyDenied = false;
@@ -77,6 +65,7 @@ boolean anyAllowed = false;
 
 for (List<String> list : listsToCheck) {
     for (String entry : list) {
+        if (!grantsRequired(claim, entry, required, managers)) continue;
         UUID id = tryParseUuid(entry);
         if (id == null) continue;
 
@@ -104,6 +93,16 @@ if (anyAllowed) {
 }
 
         if (DEBUG) plugin.getLogger().info("[DEBUG] → групповой UUID не найден в списках");
+    }
+
+    /**
+     * Даёт ли запись привата требуемый уровень — так же, как Claim#hasExplicitPermission в GP.
+     * isGrantedBy учитывает иерархию и псевдоним Inventory → Container в новых GP.
+     * В GP 18.0.0 менеджеры хранятся отдельным списком и дают только Manage.
+     */
+    private static boolean grantsRequired(Claim claim, String entry, ClaimPermission required, List<String> managers) {
+        return required.isGrantedBy(claim.getPermission(entry))
+                || (required == ClaimPermission.Manage && managers.contains(entry));
     }
 
     private static UUID tryParseUuid(String s) {

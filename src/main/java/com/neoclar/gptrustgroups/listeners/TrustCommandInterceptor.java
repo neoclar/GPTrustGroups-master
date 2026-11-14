@@ -36,10 +36,16 @@ public class TrustCommandInterceptor implements Listener {
     private record TrustCommand(String name, ClaimPermission permission, String levelKey) {}
     private static final List<TrustCommand> COMMANDS = List.of(
             new TrustCommand("trust", ClaimPermission.Build, "Build"),
-            new TrustCommand("containertrust", ClaimPermission.Inventory, "Containers"),
+            new TrustCommand("containertrust", containerPermission(), "Containers"),
             new TrustCommand("accesstrust", ClaimPermission.Access, "Access"),
             new TrustCommand("permissiontrust", ClaimPermission.Manage, "Manage")
     );
+
+    /** В новых GP Inventory переименован в Container; Inventory оставлен как псевдоним и будет удалён. */
+    private static ClaimPermission containerPermission() {
+        try { return ClaimPermission.valueOf("Container"); }
+        catch (IllegalArgumentException e) { return ClaimPermission.valueOf("Inventory"); }
+    }
 
     public TrustCommandInterceptor(GPTrustGroups plugin) {
         this.plugin = plugin;
@@ -89,11 +95,13 @@ public class TrustCommandInterceptor implements Listener {
         String groupId = group.getId().toString();
 
         if (isUntrust) {
+            // Ищем группу во всех списках привата, без switch по ClaimPermission (Inventory → Container в новых GP)
             boolean removed = false;
-            for (TrustCommand tc : COMMANDS) {
-                if (removePermission(claim, groupId, tc.permission())) removed = true;
+            for (int i = 0; i < 4; i++) {
+                if (getList(claim, i).contains(groupId)) removed = true;
             }
             if (removed) {
+                claim.setPermission(groupId, null);
                 GriefPrevention.instance.dataStore.saveClaim(claim);
                 send(player, TextMode.Success, messages.format("Trust.GroupRevoked", groupName));
             } else {
@@ -241,19 +249,6 @@ public void onTabComplete(TabCompleteEvent event) {
 private void send(Player player, ChatColor color, String message) {
     player.sendMessage(color + message);
 }
-
-    private boolean removePermission(Claim claim, String id, ClaimPermission level) {
-        List<String> targetList = switch (level) {
-            case Build -> getList(claim, 0);
-            case Inventory -> getList(claim, 1);
-            case Access -> getList(claim, 2);
-            case Manage -> getList(claim, 3);
-            default -> null;
-        };
-        if (targetList == null || !targetList.contains(id)) return false;
-        claim.setPermission(id, null);
-        return true;
-    }
 
     private List<String> getList(Claim claim, int index) {
         var b = new ArrayList<String>();
