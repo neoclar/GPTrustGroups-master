@@ -6,6 +6,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +28,11 @@ public class Messages {
     public void reload() {
         if (!file.exists()) plugin.saveResource("messages.yml", false);
         config = YamlConfiguration.loadConfiguration(file);
+        // Ключи, добавленные в новых версиях, берём из messages.yml внутри jar
+        InputStream bundled = plugin.getResource("messages.yml");
+        if (bundled != null) {
+            config.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(bundled, StandardCharsets.UTF_8)));
+        }
         cache.clear();
     }
 public String get(String key) {
